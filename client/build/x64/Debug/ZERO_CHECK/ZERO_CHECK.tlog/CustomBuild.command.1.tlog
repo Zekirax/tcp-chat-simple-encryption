@@ -1,0 +1,10 @@
+^C:\USERS\TILL\PROGRAMMATION\C++\MESSAGE CHIFFRÉ SOCKET\CLIENT\BUILD\CMAKEFILES\6812D386572E86893E383541CF412132\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" "-SC:/Users/Till/programmation/c++/message chiffré socket/client" "-BC:/Users/Till/programmation/c++/message chiffré socket/client/build" --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file "C:/Users/Till/programmation/c++/message chiffré socket/client/build/client.sln"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

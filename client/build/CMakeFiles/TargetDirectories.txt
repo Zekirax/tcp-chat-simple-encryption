@@ -1,0 +1,9 @@
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/NightlyMemoryCheck.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/Experimental.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/Continuous.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/Nightly.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/client.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/PACKAGE.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/RUN_TESTS.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/Till/programmation/c++/message chiffré socket/client/build/CMakeFiles/ZERO_CHECK.dir
