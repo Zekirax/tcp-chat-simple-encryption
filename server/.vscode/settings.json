@@ -1,8 +1,8 @@
 {
     "files.associations": {
+        "thread": "cpp",
+        "string": "cpp",
         "iostream": "cpp",
-        "ostream": "cpp",
-        "xstring": "cpp",
-        "sstream": "cpp"
+        "exception": "cpp"
     }
 }

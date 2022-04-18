@@ -4,8 +4,8 @@
 
 
 # Configuration directories and files
-SourceDirectory: C:/Users/Till/programmation/c++/message chiffré socket/server
-BuildDirectory: C:/Users/Till/programmation/c++/message chiffré socket/server/build
+SourceDirectory: /home/zekirax/tcp-chat-simple-encryption/server
+BuildDirectory: /home/zekirax/tcp-chat-simple-encryption/server/build
 
 # Where to place the cost data store
 CostDataFile: 
@@ -14,20 +14,21 @@ CostDataFile:
 Site: DESKTOP-OCG7RQU
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
-BuildName: Win32-MSBuild
+BuildName: Linux-g++
 
 # Subprojects
 LabelsForSubprojects: 
 
 # Submission information
 SubmitURL: http://
+SubmitInactivityTimeout: 
 
 # Dashboard start time
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/bin/cmake.exe" "C:/Users/Till/programmation/c++/message chiffré socket/server"
-MakeCommand: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" --build . --config "${CTEST_CONFIGURATION_TYPE}"
+ConfigureCommand: "/usr/bin/cmake" "/home/zekirax/tcp-chat-simple-encryption/server"
+MakeCommand: /usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
 DefaultCTestConfigurationType: Release
 
 # version control
@@ -35,22 +36,22 @@ UpdateVersionOnly:
 
 # CVS options
 # Default is "-d -P -A"
-CVSCommand: CVSCOMMAND-NOTFOUND
-CVSUpdateOptions: -d -A -P
+CVSCommand: 
+CVSUpdateOptions: 
 
 # Subversion options
-SVNCommand: SVNCOMMAND-NOTFOUND
+SVNCommand: 
 SVNOptions: 
 SVNUpdateOptions: 
 
 # Git options
-GITCommand: D:/Program Files (x86)/Git/cmd/git.exe
+GITCommand: 
 GITInitSubmodules: 
 GITUpdateOptions: 
 GITUpdateCustom: 
 
 # Perforce options
-P4Command: P4COMMAND-NOTFOUND
+P4Command: 
 P4Client: 
 P4Options: 
 P4UpdateOptions: 
@@ -62,8 +63,8 @@ UpdateOptions:
 UpdateType: 
 
 # Compiler info
-Compiler: C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe
-CompilerVersion: 19.28.29915.0
+Compiler: /usr/bin/g++
+CompilerVersion: 9.4.0
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
@@ -80,12 +81,8 @@ MemoryCheckCommandOptions:
 MemoryCheckSuppressionFile: 
 
 # Coverage
-CoverageCommand: COVERAGE_COMMAND-NOTFOUND
+CoverageCommand: /usr/bin/gcov
 CoverageExtraFlags: -l
-
-# Cluster commands
-SlurmBatchCommand: SLURM_SBATCH_COMMAND-NOTFOUND
-SlurmRunCommand: SLURM_SRUN_COMMAND-NOTFOUND
 
 # Testing options
 # TimeOut is the amount of time in seconds to wait for processes
@@ -98,7 +95,7 @@ TimeOut: 1500
 # so would cause the system load to exceed this value.
 TestLoad: 
 
-UseLaunchers: 0
+UseLaunchers: 
 CurlOptions: 
 # warning, if you add new options here that have to do with submit,
 # you have to update cmCTestSubmitCommand.cxx

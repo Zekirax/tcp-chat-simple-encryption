@@ -9,3 +9,5 @@ add_executable(server main.cpp)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread") #why ? read this https://stackoverflow.com/a/1665110

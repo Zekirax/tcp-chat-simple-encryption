@@ -1,173 +1,191 @@
 #include <iostream>
-#include<ctime>
+#include<thread>
 
-#define FD_SETSIZE 128 // will be set to 64 in winsock2
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include<string>
+#include<string.h>
+#include<list>
+#include<vector>
+// socket includes
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
-#pragma comment(lib, "Ws2_32.lib")
+#include "../encryption.hpp"
 
 using namespace std;
 
-fd_set master;
-int same_ip_limite = 1; // -1 is illimited
+#define BUFF_LENGTH 4096 // for recv msg
 
-void crypte(string &text, char* &key, int &key_size){
-    for (size_t i = 0; i < text.length(); i++)
-    {
-        text[i] = ~(text[i] + key[i % key_size]);
-    }
+// static thing. So these elements can be accessed by other threads
+list<int> sockets;
+
+int listening;
+int socket_index = 0;
+
+in_addr_t get_socket_ip(const int &fd){
+    sockaddr_in addr;
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    getpeername(fd, (struct sockaddr *)&addr, &addr_size);
+
+    return addr.sin_addr.s_addr;
 }
 
-char* generate_key(const int &size){  // size in bytes
-    char* key = new char[size];
+char *get_socket_string_ip(const int &fd){
+    sockaddr_in addr;
+    socklen_t addr_size = sizeof(struct sockaddr_in);
+    getpeername(fd, (struct sockaddr *)&addr, &addr_size);
 
-    if(size % 4 != 0)
-        throw invalid_argument("Key size must be a multiple of 4 !");
+    return inet_ntoa(addr.sin_addr);
+}
 
-    for (size_t i = 0; i < size / 4; i++)
+int main(int, char**) {
+    
+    // server config
+    #define SAME_IP_LIMITE 1 // -1 is unlimited
+    #define MAX_CLIENT 64
+    #define IP "127.0.0.1"
+    #define PORT 2556
+
+    sockaddr_in hints;
+    hints.sin_family = AF_INET;
+    hints.sin_port = htons(PORT);
+    inet_aton(IP, (in_addr *) &hints.sin_addr.s_addr);
+
+    // create listening socket
+    listening = socket(hints.sin_family, SOCK_STREAM, 0);
+    if (listening == -1)
     {
-        memset(key + 4 * i, rand(), 4);
+        cerr << "Failed to create listening socket" << strerror(errno) << endl;
+        return -1;
+    }
+
+    // bind socket
+    if (bind(listening, (sockaddr *) &hints, sizeof(hints)) == -1)
+    {
+        cerr << "Failed to bind to the listening socket " << strerror(errno) << endl;
+        return -1;
     }
     
-    return key;
-}
+    if(listen(listening, SOMAXCONN))
+    {
+        cerr << "Failed to listen" << strerror(errno) << endl;
+        return -1;
+    }
 
-int get_socket_ip(SOCKET &socket){
-	sockaddr_in addr;
-	socklen_t len = sizeof(sockaddr_in);
-	getsockname(socket, (sockaddr *)&addr, &len);
+    cout << "Server is bonded to port : " << PORT << " | IP : " << IP << endl; 
 
-	return addr.sin_addr.S_un.S_addr;
-}
+    // accept sockets thread
+    thread([]
+        {    
+            // declare some var used in the while
+            #if SAME_IP_LIMITE != -1
+            int same_ip_count = 0;
+            bool too_many_same_ip;
+            #endif
+            int new_client_fd;
 
-string get_socket_string_ip(SOCKET &socket){
-	int ip = get_socket_ip(socket);
-	char string_ip[INET_ADDRSTRLEN];
+            while (true)
+            {
+                new_client_fd = accept(listening, nullptr, nullptr);
+                if (new_client_fd != 1)
+                {
+                    if (sockets.size() == MAX_CLIENT)
+                    {
+                        close(new_client_fd);
+                    }
+                    else
+                    {
+                        #if SAME_IP_LIMITE != -1
+                            same_ip_count = 0;
+                            for (auto &fd : sockets)
+                            {
+                                if (get_socket_ip(fd) == get_socket_ip(new_client_fd))
+                                {
+                                    same_ip_count++;
 
-	return string( inet_ntop(AF_INET, &ip, string_ip, INET_ADDRSTRLEN) );
-}
+                                    if (same_ip_count > SAME_IP_LIMITE)
+                                    {
+                                        too_many_same_ip = true;
 
-void close_socket(SOCKET &socket)
-{
-	cout << get_socket_string_ip(socket) << " is disconnected" << endl;
+                                        cout << "Connection from " << get_socket_string_ip(new_client_fd) << " was refused for exceed SAME_IP_LIMITE == " << SAME_IP_LIMITE << endl;
 
-	FD_CLR(socket, &master); // drop client
+                                        close(new_client_fd);
 
-	closesocket(socket);
-}
+                                        break;
+                                    }
+                                }
+                            }
+                        #endif
 
-int main(int, char**) 
-{
-	srand(time(nullptr)); // to generate random key
-	// Initialze winsock
-	WSADATA wsData;
-	WORD ver = MAKEWORD(2, 2);
+                        #if SAME_IP_LIMITE != -1
+                        if (too_many_same_ip)
+                        {
+                            too_many_same_ip = false;
+                        }
+                        else
+                        {
+                        #endif
+                            socket_index++;
+                            
+                            cout << get_socket_string_ip(new_client_fd) << " is connected. ID : " << socket_index << endl; 
+                            
+                            string key = generate_key();
 
-	int wsOk = WSAStartup(ver, &wsData);
-	if (wsOk != 0)
-	{
-		cerr << "Can't Initialize winsock! Quitting" << endl;
-		return EXIT_FAILURE;
-	}
-	
-	// Create a socket
-	SOCKET listening = socket(AF_INET, SOCK_STREAM, 0);
-	if (listening == INVALID_SOCKET)
-	{
-		cerr << "Can't create a socket! Quitting" << endl;
-		return EXIT_FAILURE;
-	}
+                            // send key
+                            char buf[CRYPTE_KEY_SIZE];
+                            send(new_client_fd, &buf, CRYPTE_KEY_SIZE, 0);
+                            
+                            sockets.push_back(new_client_fd);
 
-	// Bind the ip address and port to a socket
-	sockaddr_in hint;
-	hint.sin_family = AF_INET;
-	hint.sin_port = htons(54000);
-	hint.sin_addr.S_un.S_addr = INADDR_ANY; // Could also use inet_pton .... 
-	
-	bind(listening, (sockaddr*)&hint, sizeof(hint));
+                            // recv thread
+                            thread([fd = new_client_fd, key, index = socket_index]
+                            { 
+                                char buf[BUFF_LENGTH];
+                                while (true)
+                                {
+                                    memset(&buf, 0, sizeof(buf));
+                                    int bytesReceived = recv(fd, buf, BUFF_LENGTH, 0);
+                                    if (bytesReceived > 0)
+                                    {
+                                        string msg = string(buf, 0, bytesReceived);
+                                        crypte(msg, key);
 
-	// Tell Winsock the socket is for listening 
-	listen(listening, SOMAXCONN);
+                                        cout << get_socket_string_ip(fd) << "/" << index << "> " << msg << endl; 
+                                    }
+                                    else
+                                    {
+                                        sockets.remove(fd);
 
-	// Create the master file descriptor set and zero it
-	FD_ZERO(&master);
+                                        cout << get_socket_string_ip(fd) << "/" << index << " disconnected" << endl;
 
-	FD_SET(listening, &master);
+                                        close(fd);
 
-	int key_size = 16; // 128 bits
-	char *key = generate_key(key_size);
-	while (true)
-	{
-		fd_set copy = master;
+                                        break;                                    
+                                    }
+                                }                                    
+                            }).detach();
+                        #if SAME_IP_LIMITE != -1
+                        }
+                        #endif
+                    }
+                }            
+            }
+        }
+    ).detach();
+    cout << "Server is ready to accept new clients" << endl;
 
-		int socket_count = select(0, &copy, nullptr, nullptr, nullptr); // select destroy copy. so copy master. do it
-		for (int i = 0; i < socket_count; i++)
-		{
-			SOCKET socket = copy.fd_array[i];
-			if (socket == listening)
-			{				
-				SOCKET client = accept(socket, nullptr, nullptr);
-				int client_ip = get_socket_ip(client);
+    // wait
+    cin.get();
 
-				// same ip check
-				bool too_many_same_ip;
-				if (same_ip_limite != -1)
-				{
-					too_many_same_ip = false;
-					
-					int same_ip_count = 0;
-					for (int j = 1; j < master.fd_count; j++) // not check listening socket
-					{
-						if (get_socket_ip(master.fd_array[j]) == client_ip)
-						{
-							same_ip_count++;
+    // end
+    close(listening);
 
-							if (same_ip_count > same_ip_limite)
-							{
-								too_many_same_ip = true;
-								break;
-							}
-							
-						}
-					}
-				}
+    for (auto &fd : sockets)
+    {
+        close(fd);
+    }
 
-				if (too_many_same_ip)
-				{
-					cout << "another connexion from " << client_ip << " was refused. Limite same ip is set to " << same_ip_limite << endl;
+    cout << "Server closed" << endl;
 
-					close_socket(client);
-					continue;
-				}
-
-				FD_SET(client, &master); // add to list of connected clients
-
-				cout << get_socket_string_ip(client) <<" is connected" <<endl;
-
-				send(client, key, key_size, 0); // send secure key
-			}
-			else
-			{
-				// recieve msg
-				char buf[4096];
-				ZeroMemory(buf, 4096);
-
-				int bytesReceived = recv(socket, buf, 4096, 0);
-				if (bytesReceived > 0)
-				{
-					string msg = string(buf, 0, bytesReceived); // decrypte
-					crypte(msg, key, key_size);
-
-					cout << get_socket_string_ip(socket) << "> " << msg << endl; 
-				}
-				else
-				{
-					close_socket(socket);
-				}
-			}
-		}
-		
-	}
-	
+    return 0;
 }
