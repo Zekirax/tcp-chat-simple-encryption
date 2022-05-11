@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = 
 
-CXX_FLAGS =  -pthread -g
+CXX_FLAGS =  -pthread -O3 -DNDEBUG
 

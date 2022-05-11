@@ -1,5 +1,7 @@
 #include <iostream>
 #include<thread>
+#include<ctime>
+#include "../encryption.hpp"
 
 #include<string>
 #include<string.h>
@@ -10,11 +12,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
-#include "../encryption.hpp"
-
 using namespace std;
-
-#define BUFF_LENGTH 4096 // for recv msg
 
 // static thing. So these elements can be accessed by other threads
 list<int> sockets;
@@ -38,6 +36,13 @@ char *get_socket_string_ip(const int &fd){
     return inet_ntoa(addr.sin_addr);
 }
 
+string get_time(){
+    time_t now = time(nullptr);
+    tm *local_now = localtime(&now);
+
+    return to_string(5 + local_now->tm_hour) + ":" + to_string(30 + local_now->tm_min) + ":" + to_string(local_now->tm_sec) + "/";
+}
+
 int main(int, char**) {
     
     // server config
@@ -45,6 +50,7 @@ int main(int, char**) {
     #define MAX_CLIENT 64
     #define IP "127.0.0.1"
     #define PORT 2556
+    #define BUFF_LENGTH 4096 // for recv msg
 
     sockaddr_in hints;
     hints.sin_family = AF_INET;
@@ -72,7 +78,7 @@ int main(int, char**) {
         return -1;
     }
 
-    cout << "Server is bonded to port : " << PORT << " | IP : " << IP << endl; 
+    cout << get_time() << "Server is bonded to port : " << PORT << " | IP : " << IP << endl; 
 
     // accept sockets thread
     thread([]
@@ -107,7 +113,7 @@ int main(int, char**) {
                                     {
                                         too_many_same_ip = true;
 
-                                        cout << "Connection from " << get_socket_string_ip(new_client_fd) << " was refused for exceed SAME_IP_LIMITE == " << SAME_IP_LIMITE << endl;
+                                        cout << get_time() << "Connection from " << get_socket_string_ip(new_client_fd) << " was refused for exceed SAME_IP_LIMITE == " << SAME_IP_LIMITE << endl;
 
                                         close(new_client_fd);
 
@@ -127,7 +133,7 @@ int main(int, char**) {
                         #endif
                             socket_index++;
                             
-                            cout << get_socket_string_ip(new_client_fd) << " is connected. ID : " << socket_index << endl; 
+                            cout << get_time() << get_socket_string_ip(new_client_fd) << " is connected. ID : " << socket_index << endl; 
                             
                             string key = generate_key();
 
@@ -150,13 +156,13 @@ int main(int, char**) {
                                         string msg = string(buf, 0, bytesReceived);
                                         crypte(msg, key);
 
-                                        cout << get_socket_string_ip(fd) << "/" << index << "> " << msg << endl; 
+                                        cout << get_time() << get_socket_string_ip(fd) << "/" << index << "> " << msg << endl; 
                                     }
                                     else
                                     {
                                         sockets.remove(fd);
 
-                                        cout << get_socket_string_ip(fd) << "/" << index << " disconnected" << endl;
+                                        cout << get_time() << get_socket_string_ip(fd) << "/" << index << " disconnected" << endl;
 
                                         close(fd);
 
@@ -172,7 +178,7 @@ int main(int, char**) {
             }
         }
     ).detach();
-    cout << "Server is ready to accept new clients" << endl;
+    cout << get_time() << "Server is ready to accept new clients" << endl;
 
     // wait
     cin.get();
@@ -185,7 +191,7 @@ int main(int, char**) {
         close(fd);
     }
 
-    cout << "Server closed" << endl;
+    cout << get_time() << "Server closed" << endl;
 
     return 0;
 }

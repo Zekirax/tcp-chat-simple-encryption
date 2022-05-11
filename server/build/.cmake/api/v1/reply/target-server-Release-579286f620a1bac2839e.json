@@ -35,7 +35,7 @@
 			"compileCommandFragments" : 
 			[
 				{
-					"fragment" : " -pthread -g"
+					"fragment" : " -pthread -O3 -DNDEBUG"
 				}
 			],
 			"language" : "CXX",
@@ -51,7 +51,7 @@
 		"commandFragments" : 
 		[
 			{
-				"fragment" : "-pthread -g",
+				"fragment" : "-pthread -O3 -DNDEBUG",
 				"role" : "flags"
 			},
 			{
